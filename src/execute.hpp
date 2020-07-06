@@ -1,0 +1,1 @@
+/* Contains class definition for operator class */

@@ -1,0 +1,39 @@
+Introduction:
+
+
+Welcome to my code sample for my application for a job at ORNL!
+
+Here you will find a project that illustrates my grasp of object oriented design,
+robust software design strategies, and general coding style. I chose to write this
+project in C++ because mastery of these concepts in C++ implies mastery of the same
+ideas in any other language.
+
+
+Project components:
+
+1. Build system
+
+Files:
+
+CMakeLists.txt
+
+
+description:
+
+  In my professional opinion, Makefiles are a lot like assembly code. It's good to know how they
+work, but a modern programmer should master a higher level tool. Managing a large,
+complex build system by modifying Makefiles by hand is one way to do it, but I like to use
+CMake to create the Makefile. It is cross-platform, supports alternatives to Makefiles if the
+user so chooses, is highly maintainable, and can detect and account for many different build
+environments.
+
+Class heirarchy design:
+
+data
+
+vector or matrix
+
+
+operations
+
+execute    
