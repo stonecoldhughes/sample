@@ -74,6 +74,12 @@ class tensor
     template< typename ... indices_remaining >
     int get_vector_recurse( int dim, int index );
 
+    
+    /* Captain! Add better public/private specifiers and label functions better */
+    std::array< int, sizeof...( dimlist ) > const &get_dimensions() { return dims_array; };
+    T *get_data_array() { return data; };
+    std::array< int, sizeof...( dimlist ) - 1 > const &get_offsets() { return offset_factors; };
+
   private:
 
     std::array< int, sizeof...( dimlist ) > dims_array;
@@ -113,7 +119,6 @@ get_vector( pack ... p )
   int offset = get_vector_recurse( 0, p ... );
 
   return std::vector< T >( data + offset, data + offset + dims_array.back() );
-  //return vector_1d< T >( dims_array.back(), data + offset );
 }
 
 template< typename T, int ... dimlist >
@@ -134,4 +139,59 @@ tensor< T, dimlist ... >::tensor( T *data_arg )
   return;
 }
 
+/* Captain! Experimental class for implementing a 1D operator */
+template< typename T, int ... dimlist >
+class operator_1d : tensor< T, dimlist ... >
+{
+  public:
+
+    operator_1d( T *data );
+    
+};
+
+template< typename T, int ... dimlist >
+operator_1d< T, dimlist ... >::
+operator_1d( T *data )
+  :
+  tensor< T, dimlist ... >( data )
+{
+  std::cout << "Ahoy, Captain!" << std::endl;
+  return;
+}
+
 } // end namespace data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
