@@ -19,9 +19,9 @@ include( ${CMAKE_SOURCE_DIR}/contrib/contrib.cmake )
 
 # set components to compile as shared object files
 set( components
-     data )
-     #operation
-     #execute )
+     data
+     operation )
+     #execute ) # Maybe call this 1D operation?
 
 foreach( component IN LISTS components )
 
