@@ -62,6 +62,9 @@ if( BUILD_TESTS )
 
   endforeach()
 
+  # additional libraries
+  target_link_libraries( operation_tests PRIVATE data )
+
 else()
 
   message( WARNING "No unit tests built")

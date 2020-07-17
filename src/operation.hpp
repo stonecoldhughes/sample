@@ -1,13 +1,13 @@
 #pragma once
+#include "data.hpp"
 #include <cassert>
 #include <array>
 #include <iostream>
+#include <cmath>
+
 /* Contains class definitions that define operation on data types */
 namespace operation
 {
-
-/* Captain! Next thing: a class that takes in a tensor and iterates over the rows and columns
-   properly */
 
 template< int S >
 class round_robin_wheel
@@ -39,12 +39,16 @@ private:
   int current_index;
 };
 
+/*
+X = number of wheels
+Y = each wheel's capacity
+*/
 template< int X, int Y >
 class round_robin_nd
 {
 public:
 
-  round_robin_nd( std::array< int, X > const &indices );
+  round_robin_nd( std::array< int, X > const indices = std::array< int, X >{} );
 
   void set_indices( std::array< int, X > const &new_indices );
 
@@ -60,7 +64,7 @@ private:
 };
 
 template< int X, int Y >
-round_robin_nd< X, Y >::round_robin_nd( std::array< int, X > const &indices )
+round_robin_nd< X, Y >::round_robin_nd( std::array< int, X > const indices )
 {
   assert( X > 0 );
 
@@ -83,7 +87,6 @@ round_robin_nd< X, Y >::spin()
   return;
 }
 
-/* Captain! Make note of why the wheel uses an array - size of ints etc */
 template< int X, int Y >
 void round_robin_nd< X, Y >::set_indices( std::array< int, X > const &new_indices )
 {
@@ -93,6 +96,86 @@ void round_robin_nd< X, Y >::set_indices( std::array< int, X > const &new_indice
   {
     wheels[ i ].set_index( indices[ i ] );
     wheels[ i ].spin();
+  }
+
+  return;
+}
+
+/*
+T = underlying data type
+X = number of matrixes
+Y = columns
+Z = rows
+*/
+/* rename to uniform kron? the matrices are all of uniform dimensions */
+template< typename T, int X, int Y, int Z >
+class kron_operation
+{
+
+public:
+
+  /* needs to assert on proper sizes */
+  kron_operation( data::tensor< T, X, Y, Z > const &t,
+                  data::vector_1d< T > const &v_in,
+                  data::vector_1d< T > const &v_out );
+
+  void compute_kron();
+
+private:
+
+  /* Since everything is a const reference, the data class needs no move/copy constructor */
+  data::tensor< T, X, Y, Z > const &tensor;
+  data::vector_1d< T > const &v_in;
+  data::vector_1d< T > const &v_out;
+
+};
+
+template< typename T, int X, int Y, int Z >
+kron_operation< T, X, Y, Z >::kron_operation( data::tensor< T, X, Y, Z > const &t,
+                  data::vector_1d< T > const &v_in,
+                  data::vector_1d< T > const &v_out )
+  :
+  tensor( t ),
+  v_in( v_in ),
+  v_out( v_out )
+{
+  /* assert that nothing is zero */
+  assert( X > 0 );
+  assert( Y > 0 );
+  assert( Z > 0 );
+
+  /* assert v_in and v_out are the correct size */
+  int const input_size = std::pow( Y, X );
+  assert( v_in.len == input_size );
+
+  int const output_size = std::pow( Z, X );
+  assert( v_out.len == output_size );
+
+  return;
+}
+
+template< typename T, int X, int Y, int Z >
+void kron_operation< T, X, Y, Z >::compute_kron()
+{
+  round_robin_nd< X, Y > column_selector;
+
+  /* test code, iterate through v_in, grabbing the scale */
+  for( int i = 0; i < v_in.len; ++i )
+  {
+    auto indices = column_selector.get_indices();
+
+    std::cout << "v_in[ " << i << " ] = " << v_in[ i ] << std::endl;
+    /* Captain! Switch the order of the array? */
+    for( int ii = 0; ii < indices.size(); ++ii )
+    {
+      std::vector< T > c = tensor.get_vector( int(indices.size() - 1 - ii), indices[ ii ] );
+
+      for( auto val : c ) std::cout << " " << val;
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    column_selector.spin();
   }
 
   return;

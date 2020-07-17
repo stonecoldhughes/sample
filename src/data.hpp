@@ -41,6 +41,9 @@ class vector_1d
     /* initialize empty with length "len" */
     vector_1d( int const len, T *data = nullptr );
 
+    T operator []( int const i ) const { assert( i < len && i >= 0 ); return data[ i ]; }
+    T& operator []( int const i ) { assert( i < len && i >= 0 ); return data[ i ]; }
+
     /* initialize with values - length is the length of initializer list */
     /* Captain! Uncomment after you get the variadic template thing set up */
     //vector_1d( std::initializer_list< T > values );
@@ -48,10 +51,11 @@ class vector_1d
     /* Captain! Check if vector.data() from this is the same memory address as T *data member */
     std::vector< T > get_std_vector(); 
 
+    int const len;
+
   private:
 
-    /* number of T data-type elements */
-    int const len;
+    /* "len" T data-type elements */
     T *data;
 };
 
@@ -63,16 +67,16 @@ class tensor
     tensor( T *data );
 
     template< typename ... pack >
-    std::vector< T > get_vector( pack ... );
+    std::vector< T > get_vector( pack ... ) const;
 
   private:
 
     template< typename ... indices_remaining >
-    int get_vector_recurse( int dim, int index, indices_remaining ... );
+    int get_vector_recurse( int dim, int index, indices_remaining ... ) const;
 
     /* base case routine - rename */
     template< typename ... indices_remaining >
-    int get_vector_recurse( int dim, int index );
+    int get_vector_recurse( int dim, int index ) const;
 
     
     /* Captain! Add better public/private specifiers and label functions better */
@@ -92,7 +96,7 @@ template< typename T, int ... dimlist > // Captain! Label each declaration line
 template< typename ... indices_remaining >
 int
 tensor< T, dimlist ... >::
-get_vector_recurse( int dim, int index )
+get_vector_recurse( int dim, int index ) const
 {
   return index * offset_factors[ dim ];
 }
@@ -101,7 +105,7 @@ template< typename T, int ... dimlist >
 template< typename ... indices_remaining >
 int
 tensor< T, dimlist ... >::
-get_vector_recurse( int dim, int index, indices_remaining ... indices )
+get_vector_recurse( int dim, int index, indices_remaining ... indices ) const
 {
   return index * offset_factors[ dim ] + get_vector_recurse( dim + 1, indices ... );
 }
@@ -110,7 +114,7 @@ template< typename T, int ... dimlist >
 template< typename ... pack >
 std::vector< T >
 tensor< T, dimlist ... >::
-get_vector( pack ... p )
+get_vector( pack ... p ) const
 {
   assert( sizeof...( p ) == dims_array.size() - 1 );
 
