@@ -19,6 +19,10 @@ TEMPLATE_TEST_CASE( "name", "string", double )
     for( int i = 0; i < iterations; ++i ) rr2.spin();
 
     REQUIRE( gold == rr2.get_indices() );
+
+    for( int i = 0; i < iterations; ++i ) rr2.back_spin();
+
+    REQUIRE( gold == rr2.get_indices() );
   }
 
   /* Test regular, irregular, and edge cases */
@@ -49,12 +53,19 @@ TEMPLATE_TEST_CASE( "name", "string", double )
 
     data::tensor< TestType, num_matrices, cols, rows > t( flat_tensor.data() );
     
-    data::vector_1d< TestType > v_in( input.size(), input.data() );
-    data::vector_1d< TestType > v_out( output.size(), output.data() );
+    data::vector_1d< TestType, input.size() > v_in( input.data() );
+    data::vector_1d< TestType , output.size() > v_out( output.data() );
 
     operation::kron_operation< TestType, num_matrices, cols, rows > kron_op( t, v_in, v_out );
 
     kron_op.compute_kron();
+
+    std::cout << "v_out:" << std::endl;
+    for( int i = 0; i < v_out.size(); ++i )
+    {
+      std::cout << " " << v_out[ i ];
+    }
+    std::cout << std::endl;
 
     /* Captain! Put this in a namespace too */
     trivial_truth();

@@ -56,6 +56,8 @@ public:
 
   void spin();
 
+  void back_spin();
+
 private:
 
   std::array< int, X > indices;
@@ -78,6 +80,20 @@ void
 round_robin_nd< X, Y >::spin()
 {
   for( int i = 0; i < indices.size(); ++i )
+  {
+    int index = wheels[ i ].spin();
+    indices[ i ] = index;
+    if( index != 0 ) return;
+  }
+
+  return;
+}
+
+template< int X, int Y >
+void
+round_robin_nd< X, Y >::back_spin()
+{
+  for( int i = indices.size() - 1; i >= 0; --i )
   {
     int index = wheels[ i ].spin();
     indices[ i ] = index;
@@ -116,24 +132,27 @@ public:
 
   /* needs to assert on proper sizes */
   kron_operation( data::tensor< T, X, Y, Z > const &t,
-                  data::vector_1d< T > const &v_in,
-                  data::vector_1d< T > const &v_out );
+                  data::vector_1d< T, int( std::pow( Y, X ) ) > const &v_in, 
+                  data::vector_1d< T, int( std::pow( Z, X ) ) > &v_out );
 
   void compute_kron();
+
+  void compute_kron_1d( std::array< data::vector_1d< T, Z >, X > const &kron_args,
+                        T scale_factor );
 
 private:
 
   /* Since everything is a const reference, the data class needs no move/copy constructor */
   data::tensor< T, X, Y, Z > const &tensor;
-  data::vector_1d< T > const &v_in;
-  data::vector_1d< T > const &v_out;
+  data::vector_1d< T, int( std::pow( Y, X ) ) > const &v_in;
+  data::vector_1d< T, int( std::pow( Z, X ) ) > &v_out;
 
 };
 
 template< typename T, int X, int Y, int Z >
 kron_operation< T, X, Y, Z >::kron_operation( data::tensor< T, X, Y, Z > const &t,
-                  data::vector_1d< T > const &v_in,
-                  data::vector_1d< T > const &v_out )
+                  data::vector_1d< T, int( std::pow( Y, X ) ) > const &v_in,
+                  data::vector_1d< T, int( std::pow( Z, X ) ) > &v_out )
   :
   tensor( t ),
   v_in( v_in ),
@@ -146,10 +165,10 @@ kron_operation< T, X, Y, Z >::kron_operation( data::tensor< T, X, Y, Z > const &
 
   /* assert v_in and v_out are the correct size */
   int const input_size = std::pow( Y, X );
-  assert( v_in.len == input_size );
+  assert( v_in.size() == input_size );
 
   int const output_size = std::pow( Z, X );
-  assert( v_out.len == output_size );
+  assert( v_out.size() == output_size );
 
   return;
 }
@@ -159,26 +178,92 @@ void kron_operation< T, X, Y, Z >::compute_kron()
 {
   round_robin_nd< X, Y > column_selector;
 
-  /* test code, iterate through v_in, grabbing the scale */
-  for( int i = 0; i < v_in.len; ++i )
+  for( int i = 0; i < v_in.size(); ++i )
   {
-    auto indices = column_selector.get_indices();
+    std::array< int, X > indices = column_selector.get_indices();
+
+    std::array< data::vector_1d< T, Z >, X > kron_args;
 
     std::cout << "v_in[ " << i << " ] = " << v_in[ i ] << std::endl;
-    /* Captain! Switch the order of the array? */
+
     for( int ii = 0; ii < indices.size(); ++ii )
     {
-      std::vector< T > c = tensor.get_vector( int(indices.size() - 1 - ii), indices[ ii ] );
-
-      for( auto val : c ) std::cout << " " << val;
-      std::cout << std::endl;
+      data::vector_1d< T, Z > c = tensor.get_vector( ii, indices[ ii ] );
+      kron_args[ ii ] = c;
     }
-    std::cout << std::endl;
 
-    column_selector.spin();
+    /* now process the kron arguments */
+    compute_kron_1d( kron_args, v_in[ i ] );
+
+    column_selector.back_spin();
+  }
+
+  return;
+}
+
+template< typename T, int X, int Y, int Z >
+void
+kron_operation< T, X, Y, Z >::
+compute_kron_1d( std::array< data::vector_1d< T, Z >, X > const &kron_args, T scale_factor )
+{
+  round_robin_nd< X, Z > row_selector;
+
+  std::cout << "v_out.size(): " << v_out.size() << std::endl;
+  for( int i = 0; i < v_out.size(); ++i )
+  {
+    auto indices = row_selector.get_indices();
+
+    std::cout << "i = " << i <<std::endl;
+    std::cout << "indices.size(): " << indices.size() << std::endl;
+
+    T v_i = scale_factor;
+
+    for( int ii = 0; ii < indices.size(); ++ii )
+    {
+      std::cout << "ii = " << ii << std::endl;
+      std::cout << "kron_args.size() = " << kron_args.size() << std::endl; 
+      v_i *= kron_args[ ii ][ indices[ ii ] ];
+    }
+
+    v_out[ i ] += v_i;
+
+    row_selector.back_spin();
   }
 
   return;
 }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -33,16 +33,21 @@ namespace data
 {
 
 /* Simple class to hold one dimensional data. This class does NOT manage any memory */
-template< typename T >
+/*
+T = data type
+N = length
+*/
+template< typename T, int N >
 class vector_1d
 {
   public:
 
     /* initialize empty with length "len" */
-    vector_1d( int const len, T *data = nullptr );
+    /* Captain! This is ill formed - needs a template parameter for the len */
+    vector_1d( T *data = nullptr );
 
-    T operator []( int const i ) const { assert( i < len && i >= 0 ); return data[ i ]; }
-    T& operator []( int const i ) { assert( i < len && i >= 0 ); return data[ i ]; }
+    T operator []( int const i ) const { assert( i < size() && i >= 0 ); return data[ i ]; }
+    T& operator []( int const i ) { assert( i < size() && i >= 0 ); return data[ i ]; }
 
     /* initialize with values - length is the length of initializer list */
     /* Captain! Uncomment after you get the variadic template thing set up */
@@ -51,12 +56,42 @@ class vector_1d
     /* Captain! Check if vector.data() from this is the same memory address as T *data member */
     std::vector< T > get_std_vector(); 
 
-    int const len;
+    int size() const { return N; }
 
   private:
 
     /* "len" T data-type elements */
     T *data;
+};
+
+/* constructor */
+template< typename T, int N >
+vector_1d< T, N >::vector_1d( T *data )
+  :
+  data( data )
+{
+  return;
+}
+
+template< typename T, int N >
+std::vector< T > vector_1d< T, N >::get_std_vector()
+{
+  return std::vector< T >( data, data + N );
+}
+
+/* helper class to select the final element of a parameter pack */
+template< int T >
+class last_parameter
+{
+public:
+  static int const val = T;
+};
+
+template< int ... dimlist >
+class get_last_parameter
+{
+public:
+  static int const val = ( last_parameter< dimlist >{}, ... ).val;
 };
 
 template< typename T, int ... dimlist >
@@ -67,7 +102,7 @@ class tensor
     tensor( T *data );
 
     template< typename ... pack >
-    std::vector< T > get_vector( pack ... ) const;
+    vector_1d< T, get_last_parameter< dimlist ... >::val > get_vector( pack ... ) const;
 
   private:
 
@@ -112,7 +147,7 @@ get_vector_recurse( int dim, int index, indices_remaining ... indices ) const
 
 template< typename T, int ... dimlist >
 template< typename ... pack >
-std::vector< T >
+vector_1d< T, get_last_parameter< dimlist ... >::val >
 tensor< T, dimlist ... >::
 get_vector( pack ... p ) const
 {
@@ -122,7 +157,9 @@ get_vector( pack ... p ) const
 
   int offset = get_vector_recurse( 0, p ... );
 
-  return std::vector< T >( data + offset, data + offset + dims_array.back() );
+  return vector_1d< T, get_last_parameter< dimlist ... >::val >( data + offset );
+         //dims_array.back(), data + offset ); 
+         /* Captain! Alternate last line if template stuff doesn't work */
 }
 
 template< typename T, int ... dimlist >

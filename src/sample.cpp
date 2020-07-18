@@ -2,7 +2,7 @@
 
 int main()
 {
-  data::vector_1d< double > v( 420 );
+  data::vector_1d< double, 0 > v;
 
   return 0;
 }

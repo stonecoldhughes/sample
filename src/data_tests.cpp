@@ -5,7 +5,7 @@ TEMPLATE_TEST_CASE("empty 0", "empty 1", double, float )
 {
   SECTION( "trivial test" )
   {
-    data::vector_1d< TestType > v( 420 ); 
+    data::vector_1d< TestType, 0 > v; 
 
     trivial_truth();
   }
@@ -36,7 +36,8 @@ TEMPLATE_TEST_CASE("empty 0", "empty 1", double, float )
         {
           for( int iiii = 0; iiii < dim_3; ++iiii )
           {
-            std::vector< TestType > v = t.get_vector( i, ii, iii, iiii );
+            std::vector< TestType > v = t.get_vector( i, ii, iii, iiii ).get_std_vector();
+
             v_gold.insert( v_gold.end(), v.begin(), v.end() );
           }
         }
