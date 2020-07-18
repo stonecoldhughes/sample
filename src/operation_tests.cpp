@@ -70,7 +70,61 @@ TEMPLATE_TEST_CASE( "name", "string", double )
     /* Captain! Put this in a namespace too */
     trivial_truth();
   }
+
+  SECTION( "irregular kronecker product" )
+  {
+    int const num_matrices = 4;
+    int const rows = 2;
+    int const cols = 3;
+
+    int const flat_size = num_matrices * rows * cols;
+    int const input_size = std::pow( cols, num_matrices );
+    int const output_size = std::pow( rows, num_matrices );
+
+    /* matrices */
+    std::array< TestType, flat_size > flat_tensor =
+    { 6, 7, 4, 5, 2, 3, 2, 3, 4, 5, 6, 7, 8, 13, 10, 11, 12, 9, 2, 2, 2, 2, 2, 2 };
+
+    /* input vector contains all 1's */
+    std::array< TestType, input_size > input;
+    for( auto &i : input ) i = 1;
+    
+    /* output space - should be set to zero */
+    std::array< TestType, output_size > output{};
+    for( auto i : output ) assert( i == 0 );
+
+    std::array< TestType, output_size > correct_answer =
+    {25920, 25920, 28512, 28512, 32400, 32400, 35640, 35640, 
+     32400, 32400, 35640, 35640, 40500, 40500, 44550, 44550};
+
+    data::tensor< TestType, num_matrices, cols, rows > t( flat_tensor.data() );
+    
+    data::vector_1d< TestType, input.size() > v_in( input.data() );
+    data::vector_1d< TestType , output.size() > v_out( output.data() );
+
+    operation::kron_operation< TestType, num_matrices, cols, rows > kron_op( t, v_in, v_out );
+
+    kron_op.compute_kron();
+
+    std::cout << "v_out:" << std::endl;
+    for( int i = 0; i < v_out.size(); ++i )
+    {
+      std::cout << " " << v_out[ i ];
+    }
+    std::cout << std::endl;
+
+    /* Captain! Put this in a namespace too */
+    trivial_truth();
+  }
 }
+
+
+
+
+
+
+
+
 
 
 
