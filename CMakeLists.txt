@@ -1,10 +1,10 @@
+# Set high level project parameters
 cmake_minimum_required(VERSION 3.13)
 
 project( code_sample LANGUAGES CXX )
 
 set( CMAKE_CXX_STANDARD 17 )
 
-# You better believe it's required!
 set( CMAKE_CXX_STANDARD_REQUIRED ON )
 
 message( STATUS "cmake build type: ${CMAKE_BUILD_TYPE}")
@@ -17,21 +17,20 @@ option(BUILD_TESTS "Unit tests for sample code" ON)
 # File to include external support stuff
 include( ${CMAKE_SOURCE_DIR}/contrib/contrib.cmake )
 
-# set components to compile as shared object files
+# The project is broken into separable, testable modules compiled separately as shared object
+# files.
 set( components
      data
      operation )
-     #execute ) # Maybe call this 1D operation?
 
 foreach( component IN LISTS components )
 
   add_library( ${component} SHARED src/${component}.cpp )
-  # All components are put in there
   target_include_directories( ${component} PRIVATE ${CMAKE_BINARY_DIR} )
 
 endforeach()
 
-# carry out the final linkage
+# all components are compiled and linked to the final executable
 add_executable( sample src/sample.cpp )
 
 foreach( link IN LISTS components )
@@ -45,10 +44,12 @@ if( BUILD_TESTS )
 
   enable_testing()
 
-  add_library( tests_general SHARED testing/tests_general.cpp )
+  add_library( tests_general SHARED testing/tests_general.hpp )
   set_target_properties( tests_general PROPERTIES LINKER_LANGUAGE CXX )
-  target_link_libraries( tests_general PUBLIC Catch )
+  target_link_libraries( tests_general PUBLIC Catch data )
+  target_include_directories( tests_general PRIVATE ${CMAKE_SOURCE_DIR}/src )
 
+  # Link each test file to the implementation it tests
   foreach( component IN LISTS components )
 
     add_executable( ${component}_tests src/${component}_tests.cpp)

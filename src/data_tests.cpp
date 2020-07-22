@@ -1,17 +1,13 @@
 #include "data.hpp"
 #include "tests_general.hpp"
 
-TEMPLATE_TEST_CASE("empty 0", "empty 1", double, float )
+/* test the data component with relevant floating point data types */
+TEMPLATE_TEST_CASE("data component", "container tests", double, float )
 {
-  SECTION( "trivial test" )
-  {
-    data::vector_1d< TestType, 0 > v; 
-
-    trivial_truth();
-  }
-
-  /* Explain the basic idea behind how the test works */
-  SECTION("5 dimensional tensor get_vector()")
+  /* The test works by calling "get_vector()" on each addressable 1d vector in order and
+     concatenating the result. If "get_vector()" works right, the final result will equal
+     the original vector */
+  SECTION("tensor::get_vector() test")
   {
     int const dim_0 = 2;
     int const dim_1 = 3;
@@ -21,7 +17,6 @@ TEMPLATE_TEST_CASE("empty 0", "empty 1", double, float )
 
     std::vector< TestType > numbers( dim_0 * dim_1 * dim_2 * dim_3 * dim_4 );
 
-    /* Captain! Change this to rand()? */
     for( int i = 0; i < static_cast<int>(numbers.size()); ++i ) numbers[ i ] = i;
 
     data::tensor< TestType, dim_0, dim_1, dim_2, dim_3, dim_4 > t( numbers.data() );
@@ -44,28 +39,6 @@ TEMPLATE_TEST_CASE("empty 0", "empty 1", double, float )
       }
     }
 
-    /* Captain! Replace this with an rmse check? */
-    if( v_gold == numbers ) std::cout << "Captain! Success" << std::endl;
-    else std::cout << "Captain... abject failure" << std::endl;
-
-    trivial_truth();
-  }
-
-  SECTION( "Test variadic inheritance" )
-  {
-    int const dim_0 = 2;
-    int const dim_1 = 3;
-    int const dim_2 = 4;
-    int const dim_3 = 5;
-    int const dim_4 = 3;
-
-    /* Created to have data to work on */
-    std::vector< TestType > numbers( dim_0 * dim_1 * dim_2 * dim_3 * dim_4 );
-
-    /* Captain! Change this to rand()? */
-    for( int i = 0; i < static_cast<int>(numbers.size()); ++i ) numbers[ i ] = i;
-
-    data::operator_1d< TestType, dim_0, dim_1, dim_2, dim_3, dim_4 >
-    kron_operator( numbers.data() );
+    REQUIRE( v_gold == numbers );
   }
 }

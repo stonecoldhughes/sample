@@ -1,39 +1,80 @@
-Introduction:
+Author: Harry Hughes
+email: harrynh3@gmail.com
+date: 7-21-2020
 
+Introduction - what the project is:
 
-Welcome to my code sample for my application for a job at ORNL!
+  This sample project showcases a wide range of C++ language features as well as object oriented
+  design, robust software design strategy, and clear coding style. Please read all comments for
+  more detailed notes on source code. Source code found under "src/"
+  presents a simple linear algebra library that carries out this specific linear algebra routine:
 
-Here you will find a project that illustrates my grasp of object oriented design,
-robust software design strategies, and general coding style. I chose to write this
-project in C++ because mastery of these concepts in C++ implies mastery of the same
-ideas in any other language.
+  ( M_0 kron M_1 kron ... kron M_n ) * v_in = v_out
 
+  Where the "M_i" are matrices of matching dimensions
+  "kron" indicates the Kronecker Product operation: 
+                https://en.wikipedia.org/wiki/Kronecker_product
+  "v_in" is a 1D vector,
+  "v_out" is a 1D vector,
+  "*" indicates matrix-vector multiplication
 
-Project components:
+File Guide:
 
-1. Build system
+  data.hpp
+  data.cpp
+  data_tests.cpp
 
-Files:
+    These files showcase C++ templates used to create flexible objects.
 
-CMakeLists.txt
+  operation.hpp
+  operation.cpp
+  operation_tests.cpp
 
+    These files showcase a complex problem solved using the library objects and routines
+    defined in the "data" component.
 
-description:
+  sample.cpp
+  
+    This file is empty
 
-  In my professional opinion, Makefiles are a lot like assembly code. It's good to know how they
-work, but a modern programmer should master a higher level tool. Managing a large,
-complex build system by modifying Makefiles by hand is one way to do it, but I like to use
-CMake to create the Makefile. It is cross-platform, supports alternatives to Makefiles if the
-user so chooses, is highly maintainable, and can detect and account for many different build
-environments.
+What the project is not:
 
-Class heirarchy design:
+  Performant
+  Parallel
 
-data
+  Please see "Performance note" in operation.hpp for a more detailed explanation
 
-vector or matrix
+The project contains:
 
+  CMakeLists.txt - This defines the cross-platform build system file.
 
-operations
+  src/ - source code
 
-execute    
+  contrib/ - contains 3rd party dependencies and any CMake input files needed to build them
+
+  testing/ - special 3rd party library for unit tests
+
+Instructions to build:
+
+  Make a build directory under the top-level and run CMake: 
+
+  :> mkdir build; cd build; cmake .. ;
+
+  This creates a Makefile. Build the project with:
+
+  :> make;
+
+  Or if that's too slow, try:
+
+  :> make -j;
+
+Instructions to run:
+
+  To run the tests and see what the library does, navigate to the build directory and run:
+
+  :> ctest;
+
+  This will run all the automated unit tests, display their names, and their respective results.
+  Test files are compiled executables and can be run just like any other. Pass the "--help"
+  option to any of the compiled unit test executables to get more detailed instructions about
+  how to run specific unit tests.

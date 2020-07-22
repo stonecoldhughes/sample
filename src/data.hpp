@@ -1,67 +1,57 @@
 /*
-Make a "what you should look at list - what each file shows proficiency in, instructions
-how to see it in action, etc. Include notes about what could be improved in the future, like
-using exceptions instead of asserts.
-*/
-/*
-data component
 
-Defines 2 types of custom data structures that will be used to hold the inputs and outputs of
-the operations defined in the "operations" component
+This component defines the 2 basic data structures in the sample library.
 
-The "data" component in this code sample illustrates:
+vector_1d:
 
-1. An understanding of some basic C++ template metaprogramming concepts.
-2. Implementation and understanding of STL features like iterators
-3. Using 1 and 2 to create something that is convenient to use
+  An ordered, linear array of data
+
+tensor:
+
+  An ordered, linear array of data indexed with an ordered n-tuple.
 
 */
-/* Captain! Make a short note like: sample feature = function overloading */
+
 #pragma once
 #include <iostream>
-#include <initializer_list>
 #include <cassert>
 #include <array>
-#include <functional>
-#include <iterator>
 #include <vector>
 
-/* Captain! Use size_t instead of "int" for dimension sizes */
-
-/* namespace for input/output containers for this simple matrix library */
+/* all components belong in an appropriately-titled namespace */
 namespace data
 {
 
-/* Simple class to hold one dimensional data. This class does NOT manage any memory */
 /*
+  An ordered, linear array of data.
+  Optionally manages memory.
+
 T = data type
 N = length
 */
+/* Improvement: use size_t instead of "int" for container sizes */
 template< typename T, int N >
 class vector_1d
 {
   public:
 
-    /* initialize empty with length "len" */
-    /* Captain! This is ill formed - needs a template parameter for the len */
+    /* if constructed with empty parameter list, allocate from the heap and delete when done */
     vector_1d( T *data = nullptr );
+    ~vector_1d();
 
+    /* access and assignment operators */
     T operator []( int const i ) const { assert( i < size() && i >= 0 ); return data[ i ]; }
     T& operator []( int const i ) { assert( i < size() && i >= 0 ); return data[ i ]; }
 
-    /* initialize with values - length is the length of initializer list */
-    /* Captain! Uncomment after you get the variadic template thing set up */
-    //vector_1d( std::initializer_list< T > values );
-
-    /* Captain! Check if vector.data() from this is the same memory address as T *data member */
+    /* useful function to copy data into a std::vector and return it */
     std::vector< T > get_std_vector(); 
 
     int size() const { return N; }
 
   private:
 
-    /* "len" T data-type elements */
     T *data;
+    bool manage;
 };
 
 /* constructor */
@@ -70,6 +60,26 @@ vector_1d< T, N >::vector_1d( T *data )
   :
   data( data )
 {
+  /* conditionally allocate memory if the user does not supply a pointer */
+  if( data == nullptr )
+  {
+    manage = true;
+    data = new T[ N ];
+  }
+  else manage = false;
+
+  return;
+}
+
+/* destructor */
+template< typename T, int N >
+vector_1d< T, N >::~vector_1d()
+{
+  /* conditionally free memory if the user indicated that this object manage the memory */
+  if( manage == true )
+  {
+    delete[] data;
+  }
   return;
 }
 
@@ -79,7 +89,8 @@ std::vector< T > vector_1d< T, N >::get_std_vector()
   return std::vector< T >( data, data + N );
 }
 
-/* helper class to select the final element of a parameter pack */
+/* for variadic templates, it is of interest to obtain the last value in a non-type parameter
+   pack. The following 2 classes implement this */
 template< int T >
 class last_parameter
 {
@@ -91,77 +102,147 @@ template< int ... dimlist >
 class get_last_parameter
 {
 public:
+
+  /* unary right fold expression: the parameter pack "dimlist" is expanded across the fold
+     expression. The i-th element of parameter pack "p" is denoted as "p[ i ]". Fold expression
+     expands like:
+
+     static int const val =
+     ( 
+       last_parameter< dimlist[ 0 ] >{}, 
+       last_parameter< dimlist[ 1 ] >{}, 
+       ...
+       last_parameter< dimlist[ n ] >{}
+
+     ).val
+
+     The comma operator "," evaluates the expression and throws away the result. So, the above
+     reduces to:
+
+     static int const val = last_parameter< dimlist[ n ] >{}.val;
+  */
   static int const val = ( last_parameter< dimlist >{}, ... ).val;
 };
 
+/*
+
+An ordered, linear array of data indexed with an ordered tuple. The minimum addressable units
+for this object are vector_1d objects. This class does not manage memory.
+
+T = data type
+dimlist = ordered index tuple 
+
+  Given a dimension specification:
+
+  dimlist "d" = { d_i } = { d_0, d_1, ... , d_n }
+
+  vector_1d objects are accessed via an index tuple:
+
+  index tuple "t" = { t_i } = { t_1, t_2, ... , t_n } 
+
+  0 <= t_i < d_i for i = { 1, ... , n }
+
+  and is evaluated as: 
+
+  linear position =
+  t_0 * product( { d_1, ... , d_n } ) +
+  t_1 * product( { d_2, ... , d_n } ) +
+  t_2 * product( { d_3, ... , d_n } ) +
+  ... +
+  t_m * d_n
+
+*/
+/* Future improvement: add data management as an option for this class */
 template< typename T, int ... dimlist >
 class tensor
 {
+  /* functions */
   public:
 
+    /* constructor takes pointer to data managed elsewhere */
     tensor( T *data );
 
+    /* accesses a vector_1d according to process outlined in class description. The ordered index
+       tuple is specified element-by-element as a variadic non-type parameter pack template
+       argument */
     template< typename ... pack >
     vector_1d< T, get_last_parameter< dimlist ... >::val > get_vector( pack ... ) const;
 
+  /* functions */
   private:
 
+    /* The next 2 function overloads implement core functionality of the public data access
+       routine above */
     template< typename ... indices_remaining >
     int get_vector_recurse( int dim, int index, indices_remaining ... ) const;
 
-    /* base case routine - rename */
     template< typename ... indices_remaining >
     int get_vector_recurse( int dim, int index ) const;
 
-    
-    /* Captain! Add better public/private specifiers and label functions better */
-    std::array< int, sizeof...( dimlist ) > const &get_dimensions() { return dims_array; };
-    T *get_data_array() { return data; };
-    std::array< int, sizeof...( dimlist ) - 1 > const &get_offsets() { return offset_factors; };
-
+  /* data members */
   private:
 
+    /* dimension specification { d_i } from description */
     std::array< int, sizeof...( dimlist ) > dims_array;
+
+    /* Linear array of data values */
     T *data;
+
+    /* used by "get_vector" functions to address a vector_1d */
     std::array< int, sizeof...( dimlist ) - 1 > offset_factors;
 };
 
-/* Captain! Explain why you did a base case function instead of a programmatic base case*/
-template< typename T, int ... dimlist > // Captain! Label each declaration line
-template< typename ... indices_remaining >
-int
-tensor< T, dimlist ... >::
-get_vector_recurse( int dim, int index ) const
+
+/* this function overload defines a base case for the compiler as it recursively builds the
+   public "get_vector" routine according to the metaprogrammed template definition */
+template< typename T, int ... dimlist > /* class template's parameter list */
+template< typename ... indices_remaining > /* member function template's paramater list */
+int /* function return value */
+tensor< T, dimlist ... >:: /* scope specification */
+get_vector_recurse( int dim, int index ) /* function name and parameter list */
+const /* cv-qualifier */
 {
   return index * offset_factors[ dim ];
 }
 
-template< typename T, int ... dimlist >
-template< typename ... indices_remaining >
-int
-tensor< T, dimlist ... >::
-get_vector_recurse( int dim, int index, indices_remaining ... indices ) const
+/* The compiler will unroll the recursion. Note that this function accepts 3 arguments, yet it
+   invokes itself with only 2. Each invokation shifts the leading argument of the parameter pack
+   to the position called "index" in the parameter list, and puts the remaining arguments as a
+   parameter pack in the next position in the parameter list. For finite-length lists, the
+   remainder will eventually be empty and the base-case overload defined above will be called.
+   This is compile-time recursion, not runtime recursion, so no recursive calls will occur during
+   runtime. */
+template< typename T, int ... dimlist > /* class template's parameter list */
+template< typename ... indices_remaining > /* member function template's parameter list */
+int /* function return value */
+tensor< T, dimlist ... >:: /* scope specification */
+get_vector_recurse( int dim, int index, indices_remaining ... indices ) /* function name/params */
+const /* cv-qualifier */
 {
+  /* */
   return index * offset_factors[ dim ] + get_vector_recurse( dim + 1, indices ... );
 }
 
+/* given an ordered tuple, return the requested 1d vector */
+/* performs compile-time checks and calls recursive implementation defined above */
 template< typename T, int ... dimlist >
 template< typename ... pack >
 vector_1d< T, get_last_parameter< dimlist ... >::val >
 tensor< T, dimlist ... >::
 get_vector( pack ... p ) const
 {
+  /* validate tuple's cardinality */
   assert( sizeof...( p ) == dims_array.size() - 1 );
 
+  /* This fold expression expands to a boolean statement - ensures correct data types */
   assert( ( std::is_same_v< int, pack > && ... ) );
 
   int offset = get_vector_recurse( 0, p ... );
 
   return vector_1d< T, get_last_parameter< dimlist ... >::val >( data + offset );
-         //dims_array.back(), data + offset ); 
-         /* Captain! Alternate last line if template stuff doesn't work */
 }
 
+/* constructor */
 template< typename T, int ... dimlist >
 tensor< T, dimlist ... >::tensor( T *data_arg )
   :
@@ -180,59 +261,4 @@ tensor< T, dimlist ... >::tensor( T *data_arg )
   return;
 }
 
-/* Captain! Experimental class for implementing a 1D operator */
-template< typename T, int ... dimlist >
-class operator_1d : tensor< T, dimlist ... >
-{
-  public:
-
-    operator_1d( T *data );
-    
-};
-
-template< typename T, int ... dimlist >
-operator_1d< T, dimlist ... >::
-operator_1d( T *data )
-  :
-  tensor< T, dimlist ... >( data )
-{
-  std::cout << "Ahoy, Captain!" << std::endl;
-  return;
-}
-
 } // end namespace data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

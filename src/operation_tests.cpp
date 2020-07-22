@@ -1,16 +1,23 @@
+/*
+
+This test file illustrates the library's workflor and verifies correct results on
+test problems.
+
+*/
 #include "operation.hpp"
 #include "tests_general.hpp"
 
-/* illustrates modulo repetition */
-TEMPLATE_TEST_CASE( "name", "string", double )
+TEMPLATE_TEST_CASE( "operation component", "operation tests", double, float )
 {
-  SECTION( "another test" )
+  /* the round_robin_nd class cycles sequentially through "n" finite states. If "n" is the
+     number of states, then cycling it "n" times forwards or "n" times backwards should return
+     it to the original state */
+  SECTION( "round_robin_nd finite state machine test" )
   {
     /* contains 3 round robin wheels of capacity 5 each */
     int const num_wheels = 3;
     int const wheel_size = 5;
     std::array< int, num_wheels > gold = { 0, 2, 3 };
-    std::array< int, num_wheels > indices;
 
     operation::round_robin_nd< num_wheels, wheel_size > rr2( gold );
 
@@ -25,8 +32,7 @@ TEMPLATE_TEST_CASE( "name", "string", double )
     REQUIRE( gold == rr2.get_indices() );
   }
 
-  /* Test regular, irregular, and edge cases */
-  SECTION("simple kronecker product")
+  SECTION("simple Kronecker product with square matrices")
   {
     int const num_matrices = 3;
     int const rows = 2;
@@ -36,7 +42,7 @@ TEMPLATE_TEST_CASE( "name", "string", double )
     int const input_size = std::pow( cols, num_matrices );
     int const output_size = std::pow( rows, num_matrices );
 
-    /* matrices */
+    /* 3 matrices of size 2x2 as flat data */
     std::array< TestType, flat_size > flat_tensor =
     { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
 
@@ -49,29 +55,25 @@ TEMPLATE_TEST_CASE( "name", "string", double )
     for( auto i : output ) assert( i == 0 );
 
     std::array< TestType, output_size > correct_answer =
-    { 6376, 7356, 7736, 8448, 9392, 10256, 10784, 11776 };
+    { 6736, 7356, 7736, 8448, 9392, 10256, 10784, 11776 };
 
+    /* tensor-encode the matrices */
     data::tensor< TestType, num_matrices, cols, rows > t( flat_tensor.data() );
     
     data::vector_1d< TestType, input.size() > v_in( input.data() );
     data::vector_1d< TestType , output.size() > v_out( output.data() );
 
+    /* pass parameters to a kron_operation objet */
     operation::kron_operation< TestType, num_matrices, cols, rows > kron_op( t, v_in, v_out );
 
+    /* carry out the computation and write the result to "v_out" */
     kron_op.compute_kron();
 
-    std::cout << "v_out:" << std::endl;
-    for( int i = 0; i < v_out.size(); ++i )
-    {
-      std::cout << " " << v_out[ i ];
-    }
-    std::cout << std::endl;
-
-    /* Captain! Put this in a namespace too */
-    trivial_truth();
+    /* verify correct results */
+    testing::rmse_comparison< TestType, output_size >( output, correct_answer );
   }
 
-  SECTION( "irregular kronecker product" )
+  SECTION( "simple Kronecker product with irregular matrices" )
   {
     int const num_matrices = 4;
     int const rows = 2;
@@ -81,7 +83,7 @@ TEMPLATE_TEST_CASE( "name", "string", double )
     int const input_size = std::pow( cols, num_matrices );
     int const output_size = std::pow( rows, num_matrices );
 
-    /* matrices */
+    /* matrix data is specified in column major order */
     std::array< TestType, flat_size > flat_tensor =
     { 6, 7, 4, 5, 2, 3, 2, 3, 4, 5, 6, 7, 8, 13, 10, 11, 12, 9, 2, 2, 2, 2, 2, 2 };
 
@@ -97,46 +99,20 @@ TEMPLATE_TEST_CASE( "name", "string", double )
     {25920, 25920, 28512, 28512, 32400, 32400, 35640, 35640, 
      32400, 32400, 35640, 35640, 40500, 40500, 44550, 44550};
 
+    /* create a tensor from the flat array of data */
     data::tensor< TestType, num_matrices, cols, rows > t( flat_tensor.data() );
     
+    /* create 1D vectors */
     data::vector_1d< TestType, input.size() > v_in( input.data() );
     data::vector_1d< TestType , output.size() > v_out( output.data() );
 
+    /* create a kron_operation object with the parameters created above */
     operation::kron_operation< TestType, num_matrices, cols, rows > kron_op( t, v_in, v_out );
 
+    /* write the result of the computation into "v_out" */
     kron_op.compute_kron();
 
-    std::cout << "v_out:" << std::endl;
-    for( int i = 0; i < v_out.size(); ++i )
-    {
-      std::cout << " " << v_out[ i ];
-    }
-    std::cout << std::endl;
-
-    /* Captain! Put this in a namespace too */
-    trivial_truth();
+    /* verify correct results */
+    testing::rmse_comparison< TestType, output_size >( output, correct_answer );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

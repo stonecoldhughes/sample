@@ -1,8 +1,9 @@
 #include "data.hpp"
+#include "operation.hpp"
 
 int main()
 {
-  data::vector_1d< double, 0 > v;
+  std::cout << "Ahoy, Captain!" << std::endl;
 
   return 0;
 }
